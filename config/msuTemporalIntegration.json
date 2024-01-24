@@ -1,0 +1,43 @@
+[
+	{
+		"flavor": "",
+		"hook": "",
+		"importance": "",
+		"localHookTemplate": "config/msuTemporalIntegrationLocalHookTemplate.m",
+	        "printLocalHookOutput": "1",
+		"name": "msuTemporalIntegration",
+		"pathPlacement": "append",
+		"subfolder": ["code"],
+		"toolboxRoot": "",
+		"type": "git",
+		"update": "",
+		"url": "https:\/\/github.com\/gkaguirre\/msuTemporalIntegration.git"
+	},
+	{
+		"flavor": "",
+		"hook": "",
+		"importance": "",
+		"localHookTemplate": "",
+		"name": "forwardModel",
+		"pathPlacement": "append",
+		"subfolder": "",
+		"toolboxRoot": "",
+		"type": "include",
+		"update": "",
+		"url": ""
+	},
+	{
+		"flavor": "",
+		"hook": "",
+		"importance": "",
+		"localHookTemplate": "",
+		"name": "ciftiMatlab",
+		"pathPlacement": "append",
+		"subfolder": "",
+		"toolboxRoot": "",
+		"type": "git",
+		"update": "",
+	        "url": "https:\/\/github.com\/Washington-University\/cifti-matlab.git"
+	}
+]
+
