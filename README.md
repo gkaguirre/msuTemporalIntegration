@@ -1,5 +1,5 @@
 # msuTemporalIntegration
-Demo implementation of the Mattar 2016 exponential integration model using the forwardModel platform
+Demo implementation of the [Mattar 2016](https://www.cell.com/current-biology/pdf/S0960-9822(16)30419-5.pdf) exponential integration model using the [forwardModel](https://github.com/gkaguirrelab/forwardModel) non-linear fitting platform
 
 The code can be configured using the Matlab package manager TbTb (https://github.com/ToolboxHub/ToolboxToolbox). Alternatively, the following repositories should be downloaded and placed on the Matlab path:
 
