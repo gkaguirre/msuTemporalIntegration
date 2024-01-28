@@ -3,8 +3,8 @@ Demo implementation of the Mattar 2016 exponential integration model using the f
 
 The code can be configured using toolbox toolbox. Alternatively, the following repositories should be downloaded and placed on the Matlab path:
 
-https://github.com/gkaguirrelab/forwardModel
-https://github.com/freesurfer/freesurfer
+- https://github.com/gkaguirrelab/forwardModel
+- https://github.com/freesurfer/freesurfer
 
 There are hard-coded paths in the routines parseDataFiles and parseEventFiles. These need to point to your local copy of the data for a participant.
 
