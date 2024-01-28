@@ -1,4 +1,8 @@
-function [data,templateImage] = parseDataFiles()
+function [data,templateImage] = parseDataFiles(subjectID)
+% Loads data files produced by fmriprep
+%
+% This needs to be updated to take inputs that dynamicallty define the data
+% location. This is currently all hard-coded.
 
 rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/derivatives/fMRIprep/sub-C0103/ses-1/func';
 
@@ -28,9 +32,15 @@ for nn = 1:length(dataFileNames)
     end
     thisAcqData = thisAcqData.vol;
 
+    % Convert to proportion change
+    voxelMean = mean(thisAcqData,4);
+    thisAcqData = (thisAcqData - voxelMean)./voxelMean;
+
+    % Convert 3D to vector
     thisAcqData = single(thisAcqData);
     thisAcqData = reshape(thisAcqData, [size(thisAcqData,1)*size(thisAcqData,2)*size(thisAcqData,3), size(thisAcqData,4)]);
     thisAcqData(isnan(thisAcqData)) = 0;
+    thisAcqData(isinf(thisAcqData)) = 0;
 
     % Set the first time point to zero as there is some clear effect of not
     % yet reaching steady state magnetization

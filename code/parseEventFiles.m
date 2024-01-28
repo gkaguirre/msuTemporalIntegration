@@ -1,4 +1,8 @@
-function [stimulus,stimTime] = parseEventFiles()
+function [stimulus,stimTime] = parseEventFiles(subjectID)
+% Creates the stimulus variable for forwardModel based upon event files
+%
+% This needs to be updated to take inputs that dynamicallty define the
+% event file location. This is currently all hard-coded.
 
 rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/rawdata/sub-C0103/ses-1/func';
 
@@ -16,6 +20,7 @@ nEvents = 147;
 nUniqueFaces = 27;
 nStimMatRows = nUniqueFaces + 4;
 preStimTimeSecsRaw = 30; % The period to model prior to the presentation of the first event
+postStimTimeSecsRaw = 33;
 
 % A pattern used to find the face identity index within the stimulus name
 pat = digitsPattern(1,2);
@@ -39,9 +44,12 @@ for ee = 1:length(eventFileNames)
 end
 stimDeltaT = round(mean(cellfun(@(x) mean(diff(x)),rawTime)),8);
 
-% Calculate the time to model prior to the first event
+% Calculate the time to model prior to the first event and after the last
+% event
 nEventsPre = ceil(preStimTimeSecsRaw/stimDeltaT);
 preStimTimeSecs = nEventsPre*stimDeltaT;
+nEventsPost = ceil(postStimTimeSecsRaw/stimDeltaT);
+postStimTimeSecs = nEventsPost*stimDeltaT;
 
 % Clear the stimulus cell array variable
 stimulus = [];
@@ -58,10 +66,10 @@ for ee = 1:nAcqs
     firstEventTime = eventStruct.onset(1);
 
     % Create and store the stimTime
-    stimTime{ee} = (firstEventTime - preStimTimeSecs:stimDeltaT:firstEventTime+(nEvents-1)*stimDeltaT);
+    stimTime{ee} = (firstEventTime - preStimTimeSecs:stimDeltaT:firstEventTime+(nEvents-1)*stimDeltaT+postStimTimeSecs);
 
     % Loop through the events and generate the stimMat
-    stimMat = zeros(nStimMatRows,nEventsPre+nEvents);
+    stimMat = zeros(nStimMatRows,nEventsPre+nEvents+nEventsPost);
     for ii = 1:(nEvents-(ee==nAcqs))
 
         % Identify this face stim
