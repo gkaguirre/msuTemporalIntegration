@@ -4,6 +4,9 @@ function [data,templateImage] = parseDataFiles(subjectID)
 % This needs to be updated to take inputs that dynamicallty define the data
 % location. This is currently all hard-coded.
 
+smoothSD = 3; % Standard deviation of the 3D smoothing kernel in voxels
+smoothSize = round((smoothSD*3)/2)*2+1;
+
 rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/derivatives/fMRIprep/sub-C0103/ses-1/func';
 
 dataFileNames = {...
@@ -31,6 +34,15 @@ for nn = 1:length(dataFileNames)
         templateImage.nframes = 1;
     end
     thisAcqData = thisAcqData.vol;
+
+    % Smooth the data in space
+    if smoothSD > 0
+        for ii = 1:size(thisAcqData,4)
+            vol = squeeze(thisAcqData(:,:,:,ii));
+            vol = smooth3(vol,'gaussian',smoothSize,smoothSD);
+            thisAcqData(:,:,:,ii) = vol;
+        end
+    end
 
     % Convert to proportion change
     voxelMean = mean(thisAcqData,4);
