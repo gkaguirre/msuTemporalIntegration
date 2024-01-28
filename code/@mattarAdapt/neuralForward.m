@@ -53,12 +53,18 @@ for aa = 1:nAcq
         % Get the location of the current stimulus in face space
         s = stimulus(idx(ii),nGainParams+1:nGainParams+3);
 
-        % The response to this stimulus is proportional to the L2 normal of the distance of
-        % the current stimulus from the drifting prior
-        adaptSignal(idx(ii)) = norm(s-r,2);
+        % Check that we have a defined position in face space
+        if ~any(isnan(s))
 
-        % Update the prior according to mu
-        r = r + (1-mu) * (s - r);
+            % The response to this stimulus is proportional to the L2 normal of the distance of
+            % the current stimulus from the drifting prior
+            adaptSignal(idx(ii)) = norm(s-r,2);
+
+            % Update the prior according to mu
+            r = r + (1-mu) * (s - r);
+
+        end
+
     end
 end
 

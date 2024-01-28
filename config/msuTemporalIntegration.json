@@ -38,19 +38,6 @@
 		"type": "git",
 		"update": "",
 		"url": "https:\/\/github.com\/freesurfer\/freesurfer"
-	},
-	{
-		"flavor": "",
-		"hook": "",
-		"importance": "",
-		"localHookTemplate": "",
-		"name": "ciftiMatlab",
-		"pathPlacement": "append",
-		"subfolder": "",
-		"toolboxRoot": "",
-		"type": "git",
-		"update": "",
-	        "url": "https:\/\/github.com\/Washington-University\/cifti-matlab.git"
 	}
 ]
 

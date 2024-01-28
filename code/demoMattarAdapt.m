@@ -37,7 +37,7 @@ typicalGain = 0.1;
 
 % Place to save the results
 saveDir = fullfile('/Users/aguirre/Desktop',subjectID);
-if ~isdir(saveDir)
+if ~isfolder(saveDir)
     mkdir(saveDir);
 end
 
@@ -53,7 +53,7 @@ end
 xyz = templateImage.volsize;
 if fitOneVoxel
     % A single voxel that is in the right FFA
-    vxs = 83864;
+    vxs = 83793;
     averageVoxels = true;
 else
     % Create a mask of brain voxels

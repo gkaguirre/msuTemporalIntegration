@@ -68,8 +68,12 @@ for ee = 1:nAcqs
     % Create and store the stimTime
     stimTime{ee} = (firstEventTime - preStimTimeSecs:stimDeltaT:firstEventTime+(nEvents-1)*stimDeltaT+postStimTimeSecs);
 
-    % Loop through the events and generate the stimMat
+    % Initialize the stimMat. This includes filling the face space position
+    % vectors with nans
     stimMat = zeros(nStimMatRows,nEventsPre+nEvents+nEventsPost);
+    stimMat(nUniqueFaces+2:nUniqueFaces+4,:) = nan;
+
+    % Loop through the events and generate the stimMat
     for ii = 1:(nEvents-(ee==nAcqs))
 
         % Identify this face stim

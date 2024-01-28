@@ -27,7 +27,6 @@ function x0 = update(obj,x,x0,floatSet,signal)
 
 % Obj variables
 stimulus = obj.stimulus;
-stimCols = size(stimulus,2);
 stimAcqGroups = obj.stimAcqGroups;
 stimTime = obj.stimTime;
 nGainParams = obj.nGainParams;
