@@ -35,8 +35,8 @@ x0 = zeros(1,nParams);
 % Initialize the model with the gain parameters at the typicalGain
 x0(1:nGainParams) = typicalGain;
 
-% set the mu parameter to 0.5, and the adaptGain to the typicalGain
-x0(nGainParams+1) = 0.5;
+% set the mu parameter to 0, which is the pure adaptation case
+x0(nGainParams+1) = 0;
 x0(nGainParams+2) = typicalGain;
 
 % x0 HRF: Flobs population mean amplitudes

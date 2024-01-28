@@ -3,14 +3,16 @@
 % Demonstrates non-linear fitting of fMRI data using the forwardModel and a
 % custom parameterized model ('mattarAdapt'). This model includes a gain
 % parameter for the response to each unique face (vs. the blank intervals),
-% a parameter for the effect of making a right sided vs. left sided button
-% press in response to the cover task, and two parameters that model a
-% carry-over effect of the stimuli. The carry-over effect is based upon the
-% Mattar 2016 Current Biology approach, in which a "drifting prior" follows
-% the position of stimuli within a 3D face space. The movement of the prior
-% is controlled by the adapt mu parameter (which varies between zero and
-% unity). The effect of the prior upon the fMRI signal is controlled by an
-% adapt gain parameter.
+% the effect of being the first face after the blank period, the effect of
+% having a perfect repetition of face identity, and a parameter for the
+% effect of making a right sided vs. left sided button press in response to
+% the cover task, and two parameters that model a carry-over effect of the
+% stimuli. The carry-over effect is based upon the Mattar 2016 Current
+% Biology approach, in which a "drifting prior" follows the position of
+% stimuli within a 3D face space. The movement of the prior is controlled
+% by the adapt mu parameter (which varies between zero and unity). The
+% effect of the prior upon the fMRI signal is controlled by an adapt gain
+% parameter.
 %
 % The model also fits the shape of the HRF at each voxel.
 %
@@ -62,10 +64,14 @@ else
     averageVoxels = false;
 end
 
-% Create the model opts, which includes stimLabels and typicalGain
+% Create the model opts, which includes stimLabels and typicalGain. The
+% paraSD key-value controls how varied the HRF solutions can be. A value of
+% 5 is fairly conservative and will keep the HRFs in line. This is
+% necessary for the current experiment as the stimulus sequence does not
+% uniquely constraint the temporal delay in the HRF.
 stimLabels = cellfun(@(x) sprintf('face_%02d',str2double(string(x))),num2cell(1:nFaces),'UniformOutput',false);
-stimLabels = [stimLabels, 'right-left'];
-modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain};
+stimLabels = [stimLabels,'firstFace','repeatFace','right-left'];
+modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,'paraSD',5};
 
 % Define the modelClass
 modelClass = 'mattarAdapt';
@@ -107,28 +113,16 @@ if ~fitOneVoxel
     fileName = fullfile(saveDir,[subjectID '_mattarAdapt_R2.nii']);
     MRIwrite(newImage, fileName);
 
-    % Save a map of the right-left effect size
-    newImage = templateImage;
-    volVec = results.params(:,28);
-    volVec(isnan(volVec)) = 0;
-    newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
-    fileName = fullfile(saveDir,[subjectID '_mattarAdapt_rightButton-leftButton.nii']);
-    MRIwrite(newImage, fileName);
-
-    % Save a map of the adapt mu parameter
-    newImage = templateImage;
-    volVec = results.params(:,29);
-    volVec(isnan(volVec)) = 0;
-    newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
-    fileName = fullfile(saveDir,[subjectID '_mattarAdapt_adaptMu.nii']);
-    MRIwrite(newImage, fileName);
-
-    % Save a map of the adapt gain parameter
-    newImage = templateImage;
-    volVec = results.params(:,30);
-    volVec(isnan(volVec)) = 0;
-    newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
-    fileName = fullfile(saveDir,[subjectID '_mattarAdapt_adaptGain.nii']);
-    MRIwrite(newImage, fileName);
+    % Save maps for the various param vals
+    paramLabels = {'firstFace','repeatFace','right-left','adaptMu','adaptGain'};
+    paramIdx = nFaces+1:nFaces+length(paramLabels);
+    for ii = 1:length(paramLabels)
+        newImage = templateImage;
+        volVec = results.params(:,paramIdx(ii));
+        volVec(isnan(volVec)) = 0;
+        newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
+        fileName = fullfile(saveDir,[subjectID '_mattarAdapt_' paramLabels{ii} '.nii']);
+        MRIwrite(newImage, fileName);
+    end
 
 end
