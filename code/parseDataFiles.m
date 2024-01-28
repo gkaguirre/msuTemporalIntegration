@@ -1,30 +1,21 @@
-function [data,templateImage] = parseDataFiles(subjectID)
+function [data,templateImage] = parseDataFiles(rawDataPath,dataFileNames,smoothSD)
 % Loads data files produced by fmriprep
 %
 % This needs to be updated to take inputs that dynamicallty define the data
 % location. This is currently all hard-coded.
 
-smoothSD = 3; % Standard deviation of the 3D smoothing kernel in voxels
+% The window within which smoothing will be applied
 smoothSize = round((smoothSD*3)/2)*2+1;
 
-rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/derivatives/fMRIprep/sub-C0103/ses-1/func';
-
-dataFileNames = {...
-    'sub-C0103_ses-1_task-main_run-4_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
-    'sub-C0103_ses-1_task-main_run-5_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
-    'sub-C0103_ses-1_task-main_run-6_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
-    'sub-C0103_ses-1_task-main_run-7_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
-    'sub-C0103_ses-1_task-main_run-8_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz'...
-    };
-
+% Loop over datafiles and load them
 data = [];
-
 for nn = 1:length(dataFileNames)
 
+    % Load the data
     fileName = fullfile(rawDataPath,dataFileNames{nn});
     fileName = escapeFileCharacters(fileName);
-
     thisAcqData = MRIread(fileName);
+
     % Check if this is the first acquisition. If so, retain an
     % example of the source data to be used as a template to format
     % the output files.
@@ -48,7 +39,7 @@ for nn = 1:length(dataFileNames)
     voxelMean = mean(thisAcqData,4);
     thisAcqData = (thisAcqData - voxelMean)./voxelMean;
 
-    % Convert 3D to vector
+    % Convert from 3D to vector
     thisAcqData = single(thisAcqData);
     thisAcqData = reshape(thisAcqData, [size(thisAcqData,1)*size(thisAcqData,2)*size(thisAcqData,3), size(thisAcqData,4)]);
     thisAcqData(isnan(thisAcqData)) = 0;

@@ -1,18 +1,9 @@
-function [stimulus,stimTime] = parseEventFiles(subjectID)
+function [stimulus,stimTime] = parseEventFiles(rawEventPath,eventFileNames)
 % Creates the stimulus variable for forwardModel based upon event files
 %
 % This needs to be updated to take inputs that dynamicallty define the
 % event file location. This is currently all hard-coded.
 
-rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/rawdata/sub-C0103/ses-1/func';
-
-eventFileNames = {...
-    'sub-C0103_ses-1_task-main_run-4_events.tsv',...
-    'sub-C0103_ses-1_task-main_run-5_events.tsv',...
-    'sub-C0103_ses-1_task-main_run-6_events.tsv',...
-    'sub-C0103_ses-1_task-main_run-7_events.tsv',...
-    'sub-C0103_ses-1_task-main_run-8_events.tsv'...
-    };
 
 % The number of events per eventFile
 nAcqs = length(eventFileNames);
@@ -23,10 +14,13 @@ nEvents = 147;
 % presses for the cover task
 nUniqueFaces = 27;
 nGainParams = 27 + 3;
+
 % The total number of stimulus rows is nGainParams plus the three vectors
 % that describe position in face space.
 nStimMatRows = nGainParams + 3;
-preStimTimeSecsRaw = 30; % The period to model prior to the presentation of the first event
+
+% How much to pad before and after the events for the blank periods
+preStimTimeSecsRaw = 30;
 postStimTimeSecsRaw = 33;
 
 % A pattern used to find the face identity index within the stimulus name
@@ -37,7 +31,7 @@ pat = digitsPattern(1,2);
 for ee = 1:length(eventFileNames)
 
     % Get this eventTable
-    fileName = fullfile(rawDataPath,eventFileNames{ee});
+    fileName = fullfile(rawEventPath,eventFileNames{ee});
     eventStruct = tdfread(fileName);
 
     % Get the raw event times
@@ -65,7 +59,7 @@ stimulus = [];
 for ee = 1:nAcqs
 
     % Get this eventTable
-    fileName = fullfile(rawDataPath,eventFileNames{ee});
+    fileName = fullfile(rawEventPath,eventFileNames{ee});
     eventStruct = tdfread(fileName);
 
     % Get the raw event times. We just care about the timing of the first

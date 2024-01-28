@@ -24,8 +24,40 @@ close all
 % Whole brain or one voxel?
 fitOneVoxel = false;
 
+% The smoothing kernel for the fMRI data in space
+smoothSD = 0.75;
+
+% The polynomial degree used for high-pass filtering of the timeseries
+polyDeg = 1;
+
 % The subject ID
 subjectID = 'sub-C0103';
+
+% Place to save the results files
+saveDir = fullfile('/Users/aguirre/Desktop',subjectID);
+
+% Paths and filenames for the data
+rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/derivatives/fMRIprep/sub-C0103/ses-1/func';
+dataFileNames = {...
+    'sub-C0103_ses-1_task-main_run-4_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
+    'sub-C0103_ses-1_task-main_run-5_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
+    'sub-C0103_ses-1_task-main_run-6_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
+    'sub-C0103_ses-1_task-main_run-7_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
+    'sub-C0103_ses-1_task-main_run-8_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz'...
+    };
+
+% Paths and filenames for the events
+rawEventPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/rawdata/sub-C0103/ses-1/func';
+eventFileNames = {...
+    'sub-C0103_ses-1_task-main_run-4_events.tsv',...
+    'sub-C0103_ses-1_task-main_run-5_events.tsv',...
+    'sub-C0103_ses-1_task-main_run-6_events.tsv',...
+    'sub-C0103_ses-1_task-main_run-7_events.tsv',...
+    'sub-C0103_ses-1_task-main_run-8_events.tsv'...
+    };
+
+
+%% I recommend not changing parameters past this point
 
 % The TR of the fMRI data, in seconds
 tr = 2.2;
@@ -38,18 +70,15 @@ nFaces = 27;
 typicalGain = 0.1;
 
 % Place to save the results
-saveDir = fullfile('/Users/aguirre/Desktop',subjectID);
 if ~isfolder(saveDir)
     mkdir(saveDir);
 end
 
-% Get the stimulus files from the eventFile content. This function is
-% currently hard-coded to look for the event files from just one subject at
-% a fixed location. A more general implementation is obviously needed.
-[stimulus,stimTime] = parseEventFiles(subjectID);
+% Get the stimulus files from the eventFile content.
+[stimulus,stimTime] = parseEventFiles(rawEventPath,eventFileNames);
 
-% Get the data files; this is also currently hard coded
-[data,templateImage] = parseDataFiles(subjectID);
+% Get the data files
+[data,templateImage] = parseDataFiles(rawDataPath,dataFileNames,smoothSD);
 
 % Pick the voxels to analyze
 xyz = templateImage.volsize;
@@ -66,12 +95,12 @@ end
 
 % Create the model opts, which includes stimLabels and typicalGain. The
 % paraSD key-value controls how varied the HRF solutions can be. A value of
-% 5 is fairly conservative and will keep the HRFs in line. This is
-% necessary for the current experiment as the stimulus sequence does not
-% uniquely constraint the temporal delay in the HRF.
+% 3 is fairly conservative and will keep the HRFs close to a canonical
+% shape. This is necessary for the current experiment as the stimulus
+% sequence does not uniquely constrain the temporal delay in the HRF.
 stimLabels = cellfun(@(x) sprintf('face_%02d',str2double(string(x))),num2cell(1:nFaces),'UniformOutput',false);
 stimLabels = [stimLabels,'firstFace','repeatFace','right-left'];
-modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,'paraSD',5};
+modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,'paraSD',3,'polyDeg',polyDeg};
 
 % Define the modelClass
 modelClass = 'mattarAdapt';
