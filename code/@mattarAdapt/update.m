@@ -30,6 +30,7 @@ stimulus = obj.stimulus;
 stimCols = size(stimulus,2);
 stimAcqGroups = obj.stimAcqGroups;
 stimTime = obj.stimTime;
+nGainParams = obj.nGainParams;
 
 % Update x0 with the passed x values
 x0(floatSet) = x;
@@ -40,20 +41,15 @@ hrf = obj.flobsbasis*x(end-2:end)';
 % Normalize the kernel to have unit area
 hrf = hrf/sum(abs(hrf));
 
-% Create a regression matrix for the HRF implied by the FLOBS params
-X = zeros(size(obj.dataTime,1),stimCols);
+% Create a regression matrix for the components of the model that have only
+% a gain parameter
+X = zeros(size(obj.dataTime,1),nGainParams);
 
-for ss = 1:size(stimulus,2)
+for ss = 1:nGainParams
     
-    % Zero all parameters except for this column of the stimulus matrix
-    subx = x0;
-    subx(1:obj.nGainParams) = 0;
-    subx(ss) = 1;
-
-    % Get the neural signal for this column, at the stimulus temporal
-    % resolution
-    neuralSignal = obj.neuralForward(subx);
-
+    % Grab this stimulus row
+    neuralSignal = stimulus(:,ss);
+    
     % Convolve the neuralSignal by the hrf, respecting acquisition boundaries
     fit = conv2run(neuralSignal,hrf,stimAcqGroups);
     
@@ -64,13 +60,18 @@ for ss = 1:size(stimulus,2)
         dataTime = obj.dataTime;
         fit = resamp2run(fit,stimAcqGroups,stimTime,dataAcqGroups,dataTime);
     end
+
+    % Restore the DC component for neural signals with a sum of zero
+    if abs(sum(neuralSignal)) < 1e-6
+        fit = fit - mean(fit);
+    end
     
     % Apply the cleaning step
     fit = obj.clean(fit);
     
     % Add the vector to the design matrix
     X(:,ss) = fit;
-    
+
 end
 
 % Obtain the beta values

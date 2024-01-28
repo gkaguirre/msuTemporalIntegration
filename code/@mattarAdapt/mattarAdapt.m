@@ -37,8 +37,8 @@ classdef mattarAdapt < handle
         % The number of parameters in the model
         nParams
         nGainParams
-        nHRFParams
         nAdaptParams
+        nHRFParams
 
         % Properties of the search stages.
         floatSet
@@ -66,10 +66,6 @@ classdef mattarAdapt < handle
         % the result fields
         stimLabels
 
-        % A cell array of text strings that identify classes of stimLabels
-        % to be modeled with the same exponential decay term
-        stimClassSet
-
         % A particular stimulus label that corresponds to events that we
         % wish to regress out of the time-series prior to averaging across
         % acquisitions.
@@ -93,10 +89,6 @@ classdef mattarAdapt < handle
 
         % The temporal resolution of the stimuli in seconds.
         stimDeltaT
-
-        % The length of each stimulus trial in units of the sampling time
-        % of the stimulus matrix
-        stimDelatTsPerTrial
 
         % A cell array that contains things that the model might want
         payload
@@ -150,8 +142,6 @@ classdef mattarAdapt < handle
 
             p.addParameter('stimTime',{},@iscell);
             p.addParameter('stimLabels',{},@iscell);
-            p.addParameter('similarityMatrix','',@isnumeric);
-            p.addParameter('stimClassSet',{'_LminusS_','_S_','_LMS_'},@iscell);
             p.addParameter('payload',{},@iscell);
             p.addParameter('confoundStimLabel','',@ischar);
             p.addParameter('avgAcqIdx',{},@iscell);
@@ -177,23 +167,15 @@ classdef mattarAdapt < handle
 
             % Each row in the stimulus is a different stim type that will
             % be fit with its own gain parameter. Record how many there are
-            nStimTypes = size(stimulus{1},1);
-
-            % Create the neural signal predicted by each of the classes of
-            % stimulus events. Each stim class is given a different set of
-            % adaptation params
-            obj.stimClassSet = p.Results.stimClassSet;
+            nStimTypes = length(p.Results.stimLabels);
 
             % The number of params is the number of stim types, plus the
             % the set of adaptation parameters, plus three
             % for the form of the HRF
             obj.nGainParams = nStimTypes;
+            obj.nAdaptParams = 2;
             obj.nHRFParams = 3;
-            obj.nAdaptParams = length(obj.stimClassSet);
             obj.nParams = obj.nGainParams+obj.nAdaptParams+obj.nHRFParams;
-
-            % A fixed property of this tailored model
-            obj.stimDelatTsPerTrial = 12;
 
             % Define the stimLabels
             if ~isempty(p.Results.stimLabels)
@@ -231,7 +213,7 @@ classdef mattarAdapt < handle
             % Define the fix and float param sets. In this model, The gain
             % parameters are derived by regression and are thus fixed. In
             % the first cycle, just the HRF parameters float. In the second
-            % cycle, the HRF and exponential adaptation parameters float.
+            % cycle, the HRF and adaptation parameters float.
             obj.fixSet = {1:obj.nGainParams+obj.nAdaptParams, 1:obj.nGainParams};
             obj.floatSet = {obj.nGainParams+obj.nAdaptParams+1:obj.nParams,obj.nGainParams+1:obj.nParams};
 

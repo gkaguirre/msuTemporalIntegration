@@ -37,11 +37,11 @@ ub = nan(1,nParams);
 lb(1:nGainParams) = -Inf;             % gain
 ub(1:nGainParams) = Inf;              % gain
 
-% Tau params are in units of seconds. While the ub is Inf, we apply a very
-% light shrinkage in the objective function for tau.
-tauIdx = nGainParams+1:1:nGainParams+nAdaptParams;
-lb(tauIdx) = 1;             % tau
-ub(tauIdx) = Inf;           % 
+% The mu parameter is bounded by zero and one. The adaptGain is unbounded.
+lb(nGainParams+1) = 0;
+ub(nGainParams+1) = 1;
+lb(nGainParams+2) = -Inf;
+ub(nGainParams+2) = Inf;
 
 % The HRF shape parameters vary by model type
 switch obj.hrfType

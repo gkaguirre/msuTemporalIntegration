@@ -20,66 +20,59 @@ function signal = neuralForward(obj, x)
 %
 % Obj variables
 stimulus = obj.stimulus;
-stimDeltaT = obj.stimDeltaT;
 nGainParams = obj.nGainParams;
-nAdaptParams = obj.nAdaptParams;
-stimDelatTsPerTrial = obj.stimDelatTsPerTrial;
-stimClassSet = obj.stimClassSet;
+stimAcqGroups = obj.stimAcqGroups;
 
-% Temporal support for a single trial
-trialTime = (0:stimDeltaT:(stimDelatTsPerTrial-1)*stimDeltaT)';
+% How many acquisitions do we have?
+nAcq = max(stimAcqGroups);
 
-% stimTimeTrial replicated to be equal to the length of the total stimulus
-% vector
-stimTrialTime = repmat(trialTime,size(stimulus,1)/stimDelatTsPerTrial,1);
+% Get the adaptation parameters
+mu = x(nGainParams+1);
+adaptGain = x(nGainParams+2);
 
-% A vector that provides an index for each separate trial across the entire
-% concatenated time series
-trialAcqGroups = cell2mat(arrayfun(@(x) repmat(x,1,stimDelatTsPerTrial),1:size(stimulus,1)/stimDelatTsPerTrial,'UniformOutput',false));
+% Create the signal based upon the gain parameters
+gainSignal = stimulus(:,1:nGainParams)*x(1:nGainParams)';
 
-% The indices within the x parameter vector that hold the tau and asymptote
-% parameters
-tauIdx = nGainParams+1:1:nGainParams+nAdaptParams;
+% Initialize an adapt response vector
+adaptSignal = nan(size(gainSignal));
 
-%% r(t) = r(t-1) + (1-u)*(s(t) - r(t-1))
-% where s is x,y,z position of the current stimulus
+% Now loop through the trials in each acquisition and create the integrated
+% adaptation effect based upon the drifting prior
+for aa = 1:nAcq
 
-% Initialize an empty neural signal, and then loop over the stimulus
-% classes for which we have an assigned tau exponential decay parameter.
-neuralSignal = zeros(size(stimulus,1),1);
-for ss = 1:length(stimClassSet)
+    % Set the prior to the center of the stimulus space
+    r = [0,0,0];
 
-    % Create an exponential kernel and apply this to each trial
-    tau = x(tauIdx(ss));
-    exponentialKernel = exp(-1/tau*stimTrialTime);
+    % Get the stimulus indices for this acquisition
+    idx = find(stimAcqGroups == aa);
 
-    % Get the stimulus matrix for this stimClass
-    stimParamIdx = contains(obj.stimLabels,stimClassSet{ss});
-    thisStimulus = stimulus(:,stimParamIdx);
-    
-    % Apply the exponential scaling to each column
-    for cc = 1:size(thisStimulus,2)
-        vec = thisStimulus(:,cc);
-        idx = vec ~=0;
-        vecExp = vec.*exponentialKernel;
-        if any(idx)
-            vecExp = (vecExp / mean(vecExp(idx))) * mean(vec(idx));
-        end    
-        thisStimulus(:,cc)=vecExp;
+    % Loop through the events in this acquisition and calculate the
+    % response vector
+    for ii = 1:length(idx)
+
+        % Get the location of the current stimulus in face space
+        s = stimulus(idx(ii),nGainParams+1:nGainParams+3);
+
+        % The response to this stimulus is proportional to the L2 normal of the distance of
+        % the current stimulus from the drifting prior
+        adaptSignal(idx(ii)) = norm(s-r,2);
+
+        % Update the prior according to mu
+        r = r + (1-mu) * (s - r);
     end
-    
-    % Apply the gain parameters
-    thisSignal = thisStimulus*x(stimParamIdx)';
-
-    % Add this signal to the neuralSignal
-    neuralSignal = neuralSignal + thisSignal;
 end
 
-% Now add in the stimulus components for which we did not have an assigned
-% tau parameter.
-stimParamIdx = find(~contains(obj.stimLabels,horzcat(stimClassSet{:})));
-thisSignal = stimulus(:,stimParamIdx)*x(stimParamIdx)';
-signal = neuralSignal + thisSignal;
+% Mean center the adaptSignal and set the remainder of the vector to zero
+idx = ~isnan(adaptSignal);
+adaptSignal(idx) = adaptSignal(idx)-mean(adaptSignal(idx));
+idx = isnan(adaptSignal);
+adaptSignal(idx) = 0;
+
+% Apply the adaptGain
+adaptSignal = adaptSignal * adaptGain;
+
+% Add the adaptSignal to the gainSignal
+signal = gainSignal + adaptSignal;
 
 end
 

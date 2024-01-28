@@ -21,11 +21,9 @@ function [fit, hrf] = forward(obj, x)
 
 
 % Obj variables
-stimulus = obj.stimulus;
 stimAcqGroups = obj.stimAcqGroups;
 stimTime = obj.stimTime;
 nParams = obj.nParams;
-stimDeltaT = obj.stimDeltaT;
 
 % Get the neural signal
 neuralSignal = obj.neuralForward(x);
