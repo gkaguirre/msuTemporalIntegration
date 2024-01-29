@@ -5,12 +5,7 @@ function setbounds(obj)
 %   obj.setbounds()
 %
 % Description:
-%   Bounds for the prf_timeShift model. Rationale is as follows:
-%       x, y :  Stimulus edges +-50%
-%       sigma:  1/2 stimulus width
-%       gain :  Positive values only
-%       exp  :  Locked to 0.05, following Benson et al, 2018, HCP 7T data
-%       shift:  HRF temporal shift +- 3 seconds.       
+%   Bounds for the model
 %
 %   These are specified as 1 x nParams vectors.
 %

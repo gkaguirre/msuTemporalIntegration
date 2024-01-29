@@ -5,12 +5,7 @@ function x0 = initial(obj)
 %   x0 = obj.initial()
 %
 % Description:
-%   Initial values for the prf_timeShift model. Rationale is as follows:
-%       x, y :  Center of the stimulus
-%       sigma:  1 or 10 pixels, depending upon obj.scale
-%       gain :  Set by obj.typicalGain
-%       exp  :  Locked to 0.05, following Benson et al, 2018, HCP 7T data
-%       shift:  Zero HRF temporal shift      
+%   Initial values for model
 %
 % Inputs:
 %   none
