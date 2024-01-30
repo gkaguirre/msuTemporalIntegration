@@ -45,9 +45,10 @@ for nn = 1:length(dataFileNames)
     thisAcqData(isnan(thisAcqData)) = 0;
     thisAcqData(isinf(thisAcqData)) = 0;
 
-    % Set the first time point to zero as there is some clear effect of not
-    % yet reaching steady state magnetization
-    thisAcqData(:,1) = thisAcqData(:,2);
+    % Set the first two points to the mean as there is some clear effect of
+    % not yet reaching steady state magnetization
+    thisAcqData(:,1) = mean(thisAcqData(:,3:end),2);
+    thisAcqData(:,2) = mean(thisAcqData(:,3:end),2);
 
     % Store the acquisition data in a cell array
     data{nn} = thisAcqData;
