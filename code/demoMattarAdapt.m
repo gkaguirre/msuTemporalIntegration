@@ -22,7 +22,7 @@ clear
 close all
 
 % Whole brain or one voxel?
-fitOneVoxel = false;
+fitOneVoxel = true;
 
 % The smoothing kernel for the fMRI data in space
 smoothSD = 0.75;
@@ -36,6 +36,10 @@ subjectID = 'sub-C0103';
 % Place to save the results files
 saveDir = fullfile('/Users/aguirre/Desktop',subjectID);
 
+% This is the set of covariates returned by fmriprep that we will include
+% as nuisance variables in the regression
+covarSet = {'csf','csf_derivative1','white_matter','white_matter_derivative1','framewise_displacement'};
+
 % Paths and filenames for the data
 rawDataPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/derivatives/fMRIprep/sub-C0103/ses-1/func';
 dataFileNames = {...
@@ -45,6 +49,15 @@ dataFileNames = {...
     'sub-C0103_ses-1_task-main_run-7_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz',...
     'sub-C0103_ses-1_task-main_run-8_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz'...
     };
+
+nuisanceFileNames = {...
+    'sub-C0103_ses-1_task-main_run-4_desc-confounds_timeseries.tsv',...
+    'sub-C0103_ses-1_task-main_run-5_desc-confounds_timeseries.tsv',...
+    'sub-C0103_ses-1_task-main_run-6_desc-confounds_timeseries.tsv',...
+    'sub-C0103_ses-1_task-main_run-7_desc-confounds_timeseries.tsv',...
+    'sub-C0103_ses-1_task-main_run-8_desc-confounds_timeseries.tsv'...
+    };
+
 
 % Paths and filenames for the events
 rawEventPath = '/Users/aguirre/Dropbox (Personal)/SZ_TemporalIntegration_fMRI/example_data/rawdata/sub-C0103/ses-1/func';
@@ -80,6 +93,9 @@ end
 % Get the data files
 [data,templateImage] = parseDataFiles(rawDataPath,dataFileNames,smoothSD);
 
+% Get the nuisanceVars
+nuisanceVars = parseNuisanceVars(rawDataPath,nuisanceFileNames,covarSet);
+
 % Pick the voxels to analyze
 xyz = templateImage.volsize;
 if fitOneVoxel
@@ -100,7 +116,8 @@ end
 % sequence does not uniquely constrain the temporal delay in the HRF.
 stimLabels = cellfun(@(x) sprintf('face_%02d',str2double(string(x))),num2cell(1:nFaces),'UniformOutput',false);
 stimLabels = [stimLabels,'firstFace','repeatFace','right-left'];
-modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,'paraSD',3,'polyDeg',polyDeg};
+modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,...
+    'paraSD',3,'polyDeg',polyDeg,'nuisanceVars',nuisanceVars};
 
 % Define the modelClass
 modelClass = 'mattarAdapt';
