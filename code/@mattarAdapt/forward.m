@@ -42,9 +42,6 @@ if ~isempty(stimTime)
     fit = resamp2run(fit,stimAcqGroups,stimTime,dataAcqGroups,dataTime);
 end
 
-% Apply the cleaning step
-fit = obj.clean(fit);
-
 end
 
 

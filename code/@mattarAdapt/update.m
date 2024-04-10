@@ -64,10 +64,7 @@ for ss = 1:nGainParams
     if abs(sum(neuralSignal)) < 1e-6
         fit = fit - mean(fit);
     end
-    
-    % Apply the cleaning step
-    fit = obj.clean(fit);
-    
+        
     % Add the vector to the design matrix
     X(:,ss) = fit;
 
