@@ -31,7 +31,7 @@ vxs = results.meta.vxs;          % vector of analyzed vertices / voxels
 fig1 = figure('visible','off');
 set(fig1,'PaperOrientation','landscape');
 set(fig1,'PaperUnits','normalized');
-set(gcf,'Units','points','Position',[500 500 1500 300]);
+set(gcf,'Units','points','Position',[250 250 750 150]);
 
 % Pick the voxel with the best model fit
 [~,vx]=nanmax(results.R2(vxs));
@@ -81,8 +81,7 @@ xlabel('Time [seconds]');
 title('HRF');
 
 % Store the figure contents in a variable
-results.figures.fig1 = returnFigVar(fig1);
-results.figures.fig1.format = '-dpdf';
+results.figures.fig1 = fig1;
 
 % If averageVoxels is true, save the data, model fit, and hrf
 if results.meta.averageVoxels
@@ -124,8 +123,7 @@ if ~isempty(obj.avgAcqIdx)
     annotation('textbox',dim,'String',outString,'FitBoxToText','on');
     
     % Store the figure contents in a variable
-    results.figures.fig2 = returnFigVar(fig2);
-    results.figures.fig2.format = '-dpdf';
+    results.figures.fig2 = fig2;
     
     % If averageVoxels is true, save the signal and modelFit
     if results.meta.averageVoxels

@@ -22,7 +22,7 @@ clear
 close all
 
 % Whole brain or one voxel?
-fitOneVoxel = true;
+fitOneVoxel = false;
 
 % The smoothing kernel for the fMRI data in space
 smoothSD = 0.75;
@@ -75,9 +75,6 @@ eventFileNames = {...
 % The TR of the fMRI data, in seconds
 tr = 2.2;
 
-% The number of unique face stimuli
-nFaces = 27;
-
 % Set the typicalGain, which is about 0.1 as we have converted the data to
 % proportion change
 typicalGain = 0.1;
@@ -114,8 +111,7 @@ end
 % 3 is fairly conservative and will keep the HRFs close to a canonical
 % shape. This is necessary for the current experiment as the stimulus
 % sequence does not uniquely constrain the temporal delay in the HRF.
-stimLabels = cellfun(@(x) sprintf('face_%02d',str2double(string(x))),num2cell(1:nFaces),'UniformOutput',false);
-stimLabels = [stimLabels,'firstFace','repeatFace','right-left'];
+stimLabels = {'blockOn','firstFace','repeatFace','right-left'};
 modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,...
     'paraSD',3,'polyDeg',polyDeg,'nuisanceVars',nuisanceVars};
 
@@ -135,7 +131,7 @@ results = forwardModel(data,stimulus,tr,...
 figFields = fieldnames(results.figures);
 if ~isempty(figFields)
     for ii = 1:length(figFields)
-        figHandle = struct2handle(results.figures.(figFields{ii}).hgS_070000,0,'convert');
+        figHandle = results.figures.(figFields{ii});
         figHandle.Visible = 'on';
     end
 end
@@ -160,11 +156,10 @@ if ~fitOneVoxel
     MRIwrite(newImage, fileName);
 
     % Save maps for the various param vals
-    paramLabels = {'firstFace','repeatFace','right-left','adaptMu','adaptGain'};
-    paramIdx = nFaces+1:nFaces+length(paramLabels);
+    paramLabels = [stimLabels,'adaptMu','adaptGain'];
     for ii = 1:length(paramLabels)
         newImage = templateImage;
-        volVec = results.params(:,paramIdx(ii));
+        volVec = results.params(:,ii);
         volVec(isnan(volVec)) = 0;
         newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
         fileName = fullfile(saveDir,[subjectID '_mattarAdapt_' paramLabels{ii} '.nii']);

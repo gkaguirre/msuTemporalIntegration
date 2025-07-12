@@ -9,11 +9,10 @@ function [stimulus,stimTime] = parseEventFiles(rawEventPath,eventFileNames)
 nAcqs = length(eventFileNames);
 nEvents = 147;
 
-% The number of gain params is the number of unique faces, plus vectors for
-% first face in the block, perfect repetitions, and right vs left button
-% presses for the cover task
+% The number of gain params is the face block on vs off, plus vectors for
+% perfect repetitions, and right vs left button presses for the cover task
 nUniqueFaces = 27;
-nGainParams = 27 + 3;
+nGainParams = 4;
 
 % The total number of stimulus rows is nGainParams plus the three vectors
 % that describe position in face space.
@@ -72,7 +71,7 @@ for ee = 1:nAcqs
     % Initialize the stimMat. This includes filling the face space position
     % vectors with nans
     stimMat = zeros(nStimMatRows,nEventsPre+nEvents+nEventsPost);
-    stimMat(nUniqueFaces+2:nUniqueFaces+4,:) = nan;
+    stimMat(4:6,:) = nan;
 
     % We detect perfect repetitions of faces and model them with their
     % own, separate covariate
@@ -85,49 +84,47 @@ for ee = 1:nAcqs
         str = extract(eventStruct.stim_file(ii,:),pat);
         faceID = str2double(str{1});
 
-        % Enter a delta function to model the gain for this stimulus
-        stimMat(faceID,ii+nEventsPre) = 1;
+        % Build the block "on" vs "off"
+        stimMat(1,ii+nEventsPre) = 1;
 
-        % If this is the first face of an acquisition, model that
+        % Is this the first face of the block? If so, add a delta function
         if ii == 1
-        stimMat(nUniqueFaces+1,ii+nEventsPre) = 1;
-        else
-        stimMat(nUniqueFaces+1,ii+nEventsPre) = -1;
+            stimMat(2,ii+nEventsPre) = 1;
         end
 
         % Detect if this is a perfect face repetition
         if faceID == faceIDLast
-           stimMat(nUniqueFaces+2,ii+nEventsPre) = 1;
+           stimMat(3,ii+nEventsPre) = 1;
         else
-           stimMat(nUniqueFaces+2,ii+nEventsPre) = -1;
+           stimMat(3,ii+nEventsPre) = -1;
         end
         
         % Model if the button press was right or left sided
         if contains(eventStruct.dot_side(ii,:),'Right')
-            stimMat(nUniqueFaces+3,ii+nEventsPre) = 1;
+            stimMat(4,ii+nEventsPre) = 1;
         end
         if contains(eventStruct.dot_side(ii,:),'Left')
-            stimMat(nUniqueFaces+3,ii+nEventsPre) = -1;
+            stimMat(4,ii+nEventsPre) = -1;
         end
 
         % Get the [x,y,z] location in face space
-        stimMat(nUniqueFaces+4,ii+nEventsPre) = str2double(eventStruct.face_x_loc_in_similarity_space_HC(ii,:));
-        stimMat(nUniqueFaces+5,ii+nEventsPre) = str2double(eventStruct.face_y_loc_in_similarity_space_HC(ii,:));
-        stimMat(nUniqueFaces+6,ii+nEventsPre) = str2double(eventStruct.face_z_loc_in_similarity_space_HC(ii,:));
+        stimMat(5,ii+nEventsPre) = str2double(eventStruct.face_x_loc_in_similarity_space_HC(ii,:));
+        stimMat(6,ii+nEventsPre) = str2double(eventStruct.face_y_loc_in_similarity_space_HC(ii,:));
+        stimMat(7,ii+nEventsPre) = str2double(eventStruct.face_z_loc_in_similarity_space_HC(ii,:));
 
         % Update the faceIDLast
         faceIDLast = faceID;
 
     end
 
-    % Mean center the unique face rows
-    for ff = 1:nUniqueFaces
+    % Mean center block on vs off and the "first face"
+    for ff = 1:2
         stimMat(ff,:) = stimMat(ff,:) - mean(stimMat(ff,:));
     end
 
     % Mean center the other gain rows by adjusting the magnitude of the
     % negative arm to balance the positive arm
-    for ff = nUniqueFaces+1:nUniqueFaces+3
+    for ff = 3:4
         vec = stimMat(ff,:);
         posIdx = vec>0;
         negIdx = vec<0;

@@ -33,46 +33,48 @@ adaptGain = x(nGainParams+2);
 % Create the signal based upon the gain parameters
 gainSignal = stimulus(:,1:nGainParams)*x(1:nGainParams)';
 
-% Initialize an adapt response vector
-adaptSignal = nan(size(gainSignal));
+% Obtain the coordinate vectors for the face space
+coordSeq = stimulus(:,nGainParams+1:nGainParams+3);
+
+% Create the stimContextSeq vector
+stimContextSeq = zeros(length(stimAcqGroups),3);
 
 % Now loop through the trials in each acquisition and create the integrated
 % adaptation effect based upon the drifting prior
 for aa = 1:nAcq
-
-    % Set the prior to the center of the stimulus space
-    r = [0,0,0];
 
     % Get the stimulus indices for this acquisition
     idx = find(stimAcqGroups == aa);
 
     % Loop through the events in this acquisition and calculate the
     % response vector
-    for ii = 1:length(idx)
+    for ii = 2:length(idx)
 
-        % Get the location of the current stimulus in face space
-        s = stimulus(idx(ii),nGainParams+1:nGainParams+3);
+        % Get the location of the prior stimulus in face space
+        s = coordSeq(idx(ii-1),:);
 
         % Check that we have a defined position in face space
         if ~any(isnan(s))
-
-            % The response to this stimulus is proportional to the L2 normal of the distance of
-            % the current stimulus from the drifting prior
-            adaptSignal(idx(ii)) = norm(s-r,2);
-
-            % Update the prior according to mu
-            r = r + (1-mu) * (s - r);
-
+            stimContextSeq(idx(ii),:) = stimContextSeq(idx(ii-1),:) + (1-mu) * (s - stimContextSeq(idx(ii-1),:));
+        else
+            stimContextSeq(idx(ii),:) = [0,0,0];
         end
-
     end
 end
 
+% The response to this stimulus is proportional to the L2 normal of the
+% distance of the current stimulus from the drifting prior
+adaptSignal = abs(coordSeq - stimContextSeq);
+adaptSignal = vecnorm(adaptSignal,2,2);
+
 % Mean center the adaptSignal and set the remainder of the vector to zero
-idx = ~isnan(adaptSignal);
+idx = ~isnan(coordSeq(:,1));
 adaptSignal(idx) = adaptSignal(idx)-mean(adaptSignal(idx));
 idx = isnan(adaptSignal);
 adaptSignal(idx) = 0;
+
+% Set the vector to have unit variance
+adaptSignal = adaptSignal / std(adaptSignal);
 
 % Apply the adaptGain
 adaptSignal = adaptSignal * adaptGain;
