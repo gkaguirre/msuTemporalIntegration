@@ -62,7 +62,7 @@ for aa = 1:nAcq
     end
 end
 
-% The response to this stimulus is proportional to the L2 normal of the
+% The response to this stimulus is proportional to the L2 norm of the
 % distance of the current stimulus from the drifting prior
 adaptSignal = abs(coordSeq - stimContextSeq);
 adaptSignal = vecnorm(adaptSignal,2,2);

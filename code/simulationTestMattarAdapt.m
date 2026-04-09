@@ -21,12 +21,6 @@
 clear
 close all
 
-% Whole brain or one voxel?
-fitOneVoxel = true;
-
-% The smoothing kernel for the fMRI data in space
-smoothSD = 0.75;
-
 % The polynomial degree used for high-pass filtering of the timeseries
 polyDeg = 1;
 
@@ -88,23 +82,15 @@ end
 [stimulus,stimTime] = parseEventFiles(rawEventPath,eventFileNames);
 
 % Get the data files
-[data,templateImage] = parseDataFiles(rawDataPath,dataFileNames,smoothSD);
+[data,templateImage] = parseDataFiles(rawDataPath,dataFileNames,0);
+
+% Keep just one voxel of data for this simulation
+for ii = 1:length(data)
+    data{ii} = data{ii}(1,:);
+end
 
 % Get the nuisanceVars
 nuisanceVars = parseNuisanceVars(rawDataPath,nuisanceFileNames,covarSet);
-
-% Pick the voxels to analyze
-xyz = templateImage.volsize;
-if fitOneVoxel
-    % A single voxel that is in the right FFA
-    vxs = 83793;
-    averageVoxels = true;
-else
-    % Create a mask of brain voxels
-    brainThresh = 2000;
-    vxs = find(reshape(templateImage.vol, [prod(xyz), 1]) > brainThresh);
-    averageVoxels = false;
-end
 
 % Create the model opts, which includes stimLabels and typicalGain. The
 % paraSD key-value controls how varied the HRF solutions can be. A value of
@@ -113,57 +99,42 @@ end
 % sequence does not uniquely constrain the temporal delay in the HRF.
 stimLabels = {'blockOn','firstFace','repeatFace','right-left'};
 modelOpts = {'stimLabels',stimLabels,'typicalGain',typicalGain,...
-    'paraSD',3,'polyDeg',polyDeg,'nuisanceVars',nuisanceVars};
+    'paraSD',3,'polyDeg',polyDeg};
 
 % Define the modelClass
 modelClass = 'mattarAdapt';
 
+model = mattarAdapt(data,stimulus,tr,...
+    'stimTime',stimTime,modelOpts{:});
+
+% Define the model parameters for the simulation
+x = model.initial;
+
+% Set the gain parameters to have a substanital effect of blockOn, and then
+% no effect of firstface, pure repeat, or the left-right effect
+x(1)=0.5;
+x(2:4)=0;
+
+% Set the mu to zero (pure adapt), and the stimulus history gain to 0.1
+x(5)=0;
+x(6)=0.3;
+
+% Create simulated data for a voxel
+datats = model.forward(x);
+
+% Add some noise, and place this simulated time series back into data 
+datats = datats + randn(size(datats))*range(datats)/5;
+acqLength = size(data{1},2);
+for ii = 1:length(data)
+    data{ii}(1,:) = datats((ii-1)*acqLength+1:ii*acqLength);
+end
+
 % Call the forwardModel
 results = forwardModel(data,stimulus,tr,...
     'stimTime',stimTime,...
-    'vxs',vxs,...
-    'averageVoxels',averageVoxels,...
     'verbose',true,...
     'modelClass',modelClass,...
     'modelOpts',modelOpts);
 
-% Show the results figures
-figFields = fieldnames(results.figures);
-if ~isempty(figFields)
-    for ii = 1:length(figFields)
-        figHandle = results.figures.(figFields{ii});
-        figHandle.Visible = 'on';
-    end
-end
 
-% Save some files if we processed the whole brain
-if ~fitOneVoxel
 
-    % Save the results
-    fileName = fullfile(saveDir,[subjectID '_mattarAdaptResults.mat']);
-    save(fileName,'results');
-
-    % Save the template image
-    fileName = fullfile(saveDir,[subjectID '_epiTemplate.nii']);
-    MRIwrite(templateImage, fileName);
-
-    % Save a map of R2 values
-    newImage = templateImage;
-    volVec = results.R2;
-    volVec(isnan(volVec)) = 0;
-    newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
-    fileName = fullfile(saveDir,[subjectID '_mattarAdapt_R2.nii']);
-    MRIwrite(newImage, fileName);
-
-    % Save maps for the various param vals
-    paramLabels = [stimLabels,'adaptMu','adaptGain'];
-    for ii = 1:length(paramLabels)
-        newImage = templateImage;
-        volVec = results.params(:,ii);
-        volVec(isnan(volVec)) = 0;
-        newImage.vol = reshape(volVec,xyz(1),xyz(2),xyz(3));
-        fileName = fullfile(saveDir,[subjectID '_mattarAdapt_' paramLabels{ii} '.nii']);
-        MRIwrite(newImage, fileName);
-    end
-
-end
